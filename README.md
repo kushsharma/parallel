@@ -3,6 +3,8 @@
 Execute trivial operations in parallel without the hassle of maintaining channels,
 wait groups, error accumulators and other boilerplate code.
 
+[![Build Status](https://travis-ci.com/kushsharma/parallel.svg?branch=main)](https://travis-ci.com/kushsharma/parallel)
+
 ## How to use
 
 ```go
