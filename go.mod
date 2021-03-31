@@ -1,6 +1,6 @@
 module github.com/kushsharma/parallel
 
-go 1.15
+go 1.13
 
 require (
 	github.com/pkg/errors v0.9.1
