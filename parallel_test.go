@@ -102,7 +102,7 @@ func TestRunner(t *testing.T) {
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				p := parallel.NewRunner()
+				p := parallel.NewRunner(parallel.WithLimit(10))
 				for _, fn := range tt.funcs {
 					p.Add(fn)
 				}
