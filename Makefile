@@ -6,7 +6,7 @@ GOVERSION := $(shell go version | cut -d ' ' -f 3 | cut -d '.' -f 2)
 check: test-race fmt vet lint ## Run tests and linters
 
 test: ## Run tests
-	go test ./...
+	go test ./... -race
 
 test-race: ## Run tests with race detector
 	go test -race ./...

@@ -106,8 +106,8 @@ func NewRunner(opts ... RunnerOption) *Runner {
 	r := &Runner{
 		wg:   sync.WaitGroup{},
 		data: []func() (interface{}, error){},
-		workers: 10000,
-		ticketPerSec: 10000,
+		workers: 100,
+		ticketPerSec: 1000,
 	}
 	for _, opt := range opts {
 		opt(r)
