@@ -119,7 +119,7 @@ func TestRunner(t *testing.T) {
 		}
 	})
 
-	t.Run("should run funcs in parallel with correct result and errors", func(t *testing.T) {
+	t.Run("should run funcs in parallel with concurrency worker limits", func(t *testing.T) {
 		tests := []struct {
 			name      string
 			funcs     []func() (interface{}, error)
@@ -178,6 +178,60 @@ func TestRunner(t *testing.T) {
 					}
 					assert.Equal(t, tt.wantState[i].Val, e.Val)
 				}
+			})
+		}
+	})
+
+	t.Run("should run funcs in parallel with concurrency time limits", func(t *testing.T) {
+		tests := []struct {
+			name      string
+			funcs     []func() (interface{}, error)
+			wantState []parallel.State
+		}{
+			{
+				name: "no result no error",
+				funcs: []func() (interface{}, error){
+					func() (interface{}, error) {
+						return nil, nil
+					},
+					func() (interface{}, error) {
+						return nil, nil
+					},
+					func() (interface{}, error) {
+						return nil, nil
+					},
+					func() (interface{}, error) {
+						return nil, nil
+					},
+					func() (interface{}, error) {
+						return nil, nil
+					},
+					func() (interface{}, error) {
+						return nil, nil
+					},
+					func() (interface{}, error) {
+						return nil, nil
+					},
+					func() (interface{}, error) {
+						return nil, nil
+					},
+				},
+				wantState: []parallel.State{
+					{},	{},	{},	{}, {},	{},	{},	{},
+				},
+			},
+		}
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				p := parallel.NewRunner(parallel.WithTicket(3))
+				for _, fn := range tt.funcs {
+					p.Add(fn)
+				}
+				start := time.Now()
+				states := p.Run()
+				elapsed := time.Since(start)
+				assert.GreaterOrEqual(t, int(elapsed.Seconds()), 2)
+				assert.Equal(t, len(states), len(tt.wantState))
 			})
 		}
 	})

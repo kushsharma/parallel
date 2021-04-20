@@ -2,6 +2,7 @@ package parallel
 
 import (
 	"sync"
+	"go.uber.org/ratelimit"
 )
 
 // Runner is a helper to execute operations in parallel
@@ -10,6 +11,7 @@ type Runner struct {
 	wg   sync.WaitGroup
 	data []func() (interface{}, error)
 	workers int
+	ticketPerSec int
 }
 
 // State is provided as a result of each operation
@@ -35,9 +37,10 @@ func (p *Runner) Add(fn func() (interface{}, error)) {
 	p.data = append(p.data, fn)
 }
 
-func (p *Runner) worker(inputCh chan indexedJob, outCh chan indexedState) {
+func (p *Runner) worker(inputCh chan indexedJob, outCh chan indexedState, rl ratelimit.Limiter) {
 	defer p.wg.Done()
 	for job := range inputCh {
+		_ = rl.Take()
 		res, err := job.fn()
 		outCh <- indexedState{
 			index: job.index,
@@ -54,13 +57,14 @@ func (p *Runner) worker(inputCh chan indexedJob, outCh chan indexedState) {
 // one to one with the order in which routines are added via
 // Add() fn
 func (p *Runner) Run() []State {
+	rl := ratelimit.New(p.ticketPerSec)
 	inputCh := make(chan indexedJob)
 	outCh := make(chan indexedState, len(p.data))
 
 	// start workers
 	for i := 0; i < p.workers; i++ {
 		p.wg.Add(1)
-		go p.worker(inputCh, outCh)
+		go p.worker(inputCh, outCh, rl)
 	}
 
 	// queue jobs
@@ -103,6 +107,7 @@ func NewRunner(opts ... RunnerOption) *Runner {
 		wg:   sync.WaitGroup{},
 		data: []func() (interface{}, error){},
 		workers: 10000,
+		ticketPerSec: 10000,
 	}
 	for _, opt := range opts {
 		opt(r)
@@ -116,5 +121,12 @@ type RunnerOption func(*Runner)
 func WithLimit(l int) RunnerOption {
 	return func(runner *Runner) {
 		runner.workers = l
+	}
+}
+
+// WithTicket restricts n number of jobs per second
+func WithTicket(l int) RunnerOption {
+	return func(runner *Runner) {
+		runner.ticketPerSec = l
 	}
 }
