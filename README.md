@@ -36,3 +36,10 @@ for runIdx, state := range runner.Run() {
 	}
 }
 ```
+
+### Options
+
+Limit concurrancy with 
+```go
+runner := parallel.NewRunner(paralle.WithLimit(10))
+```
